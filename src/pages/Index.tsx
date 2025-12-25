@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface Disease {
   id: string;
@@ -227,6 +229,7 @@ const timelineData = diseases.map(d => ({
 const Index = () => {
   const [selectedCentury, setSelectedCentury] = useState<string>('all');
   const [selectedDisease, setSelectedDisease] = useState<Disease | null>(null);
+  const [showQR, setShowQR] = useState(false);
 
   const filteredDiseases = selectedCentury === 'all' 
     ? diseases 
@@ -235,17 +238,28 @@ const Index = () => {
   const centuries = ['all', ...Array.from(new Set(diseases.map(d => d.century)))];
 
   const totalDeaths = diseases.reduce((sum, d) => sum + d.deaths, 0);
+  
+  const currentUrl = window.location.href;
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12 max-w-7xl">
-        <header className="text-center mb-16 animate-fade-in">
+        <header className="text-center mb-16 animate-fade-in relative">
           <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Исторические пандемии
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
             Хронология крупнейших эпидемий и пандемий в истории человечества
           </p>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowQR(true)}
+            className="mt-4"
+          >
+            <Icon name="QrCode" className="h-4 w-4 mr-2" />
+            Поделиться QR-кодом
+          </Button>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 animate-scale-in">
@@ -520,6 +534,59 @@ const Index = () => {
                     ))}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {showQR && (
+          <div 
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-fade-in"
+            onClick={() => setShowQR(false)}
+          >
+            <Card 
+              className="max-w-md w-full animate-scale-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-xl mb-2">QR-код сайта</CardTitle>
+                    <CardDescription>Отсканируйте для быстрого доступа</CardDescription>
+                  </div>
+                  <button 
+                    onClick={() => setShowQR(false)}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Icon name="X" className="h-6 w-6" />
+                  </button>
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center gap-6">
+                <div className="bg-white p-6 rounded-xl">
+                  <QRCodeSVG 
+                    value={currentUrl}
+                    size={256}
+                    level="H"
+                    includeMargin={true}
+                    fgColor="#8B5CF6"
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground break-all">
+                    {currentUrl}
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentUrl);
+                  }}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Icon name="Copy" className="h-4 w-4 mr-2" />
+                  Скопировать ссылку
+                </Button>
               </CardContent>
             </Card>
           </div>
